@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("staff") // admin, staff
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Item {
+  id          String      @id @default(cuid())
+  name        String
+  category    String
+  price       Float
+  costPrice   Float
+  stock       Int         @default(0)
+  sku         String      @unique
+  description String?
+  image       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  orderItems  OrderItem[]
+}
+
+model Table {
+  id             String   @id @default(cuid())
+  number         Int      @unique
+  seats          Int
+  status         String   @default("available") // available, occupied, reserved
+  currentOrderId String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  orders         Order[]
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  orderType     String // dine-in, takeaway, delivery
+  paymentMethod String // cash, card, online
+  status        String      @default("pending") // pending, completed, cancelled
+  subtotal      Float
+  serviceCharge Float       @default(0)
+  discount      Float       @default(0)
+  total         Float
+  staffName     String?
+  customerName  String?
+  customerPhone String?
+  tableId       String?
+  tableNumber   Int?
+  table         Table?      @relation(fields: [tableId], references: [id])
+  items         OrderItem[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  itemId    String
+  item      Item     @relation(fields: [itemId], references: [id])
+  quantity  Int
+  price     Float // Price at time of order
+  createdAt DateTime @default(now())
+}
+
+model Settings {
+  id                   String   @id @default(cuid())
+  shopName             String   @default("Brew & Bite Café")
+  address              String
+  phone                String
+  email                String
+  serviceChargePercent Float    @default(10)
+  taxPercent           Float    @default(0)
+  currencyCode         String   @default("INR")
+  currencyLocale       String   @default("en-IN")
+  currencySymbol       String   @default("₹")
+  logo                 String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
